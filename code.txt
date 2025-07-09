@@ -1,0 +1,49 @@
+!pip install tensorflow==2.12.1
+
+
+
+from google.colab import files
+uploaded = files.upload()  
+from keras.models import load_model  # Load Keras model
+from PIL import Image, ImageOps  # For image processing
+import numpy as np
+from IPython.display import display  # For displaying the image in notebook
+
+# Disable scientific notation for clarity
+np.set_printoptions(suppress=True)
+
+# Load the trained Keras model
+model = load_model("keras_model.h5", compile=False)
+
+# Load class labels
+class_names = open("labels.txt", "r").readlines()
+
+# Create an empty NumPy array with the correct shape for model input
+data = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
+
+# Load and display the input image
+image = Image.open("/content/R (3).jfif").convert("RGB")
+display(image)  # Show original image
+
+# Resize and crop the image to 224x224 pixels
+size = (224, 224)
+image = ImageOps.fit(image, size, Image.Resampling.LANCZOS)
+
+# Convert the image to a NumPy array
+image_array = np.asarray(image)
+
+# Normalize pixel values to the range [-1, 1]
+normalized_image_array = (image_array.astype(np.float32) / 127.5) - 1
+
+# Load the processed image into the array
+data[0] = normalized_image_array
+
+# Make prediction using the model
+prediction = model.predict(data)
+index = np.argmax(prediction)  # Get index of highest probability class
+class_name = class_names[index]  # Get class label
+confidence_score = prediction[0][index]  # Get confidence score
+
+# Print results
+print("Class:", class_name[2:], end="")  # Skip label index (e.g., "0 ") from class name
+print("Confidence Score:", confidence_score)
